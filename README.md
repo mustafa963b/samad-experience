@@ -1,9 +1,9 @@
-# SAMD — صمد
+# SAMAD — صمد
 
 تجربة عربية تفاعلية للسبح المعطّرة والإهداء. تصميم متجاوب، حركة مرتبطة بالتمرير، معاينة ألوان الفوّاحة، ومحاكاة تجربة بطاقة NFC.
 
 ## المعاينة
-https://mustafa963b.github.io/samd-experience/
+https://mustafa963b.github.io/samad-experience/
 
 ## التشغيل
 الموقع مبني من HTML وCSS وJavaScript، ويعمل على استضافة ملفات ثابتة. افتح index.html عبر خادم محلي أو GitHub Pages.
