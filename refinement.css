@@ -41,3 +41,9 @@
 .anatomy{--scene-travel:135svh}.colors{--scene-travel:30svh}.gift{--scene-travel:25svh}.nfc{--scene-travel:80svh}
 @media(max-width:650px){.scroll-scene{--stage-floor:650px}.hero{--scene-travel:25svh}.anatomy{--scene-travel:115svh}.colors{--scene-travel:20svh}.gift{--scene-travel:15svh}.nfc{--stage-floor:790px;--scene-travel:70svh}}
 @media(prefers-reduced-motion:reduce){.scroll-scene{min-height:0}}
+
+/* Consistent vector arrows, including Safari on iPhone. */
+.link-arrow{display:inline-block;width:20px;height:20px;flex:0 0 20px;vertical-align:middle;color:inherit;overflow:visible;transition:transform 250ms ease}
+.section-cta>span{display:inline-flex;align-items:center;justify-content:center;line-height:1}.section-cta>span .link-arrow{width:18px;height:18px;flex-basis:18px}.phone-notification .link-arrow{width:12px;height:12px;flex-basis:12px;margin-inline-start:4px}
+@media(max-width:650px){.section-cta{gap:18px}.section-cta>span .link-arrow{width:18px;height:18px}}
+@media(prefers-reduced-motion:reduce){.link-arrow{transition:none}}
