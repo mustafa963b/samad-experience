@@ -3,7 +3,7 @@
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const clamp=v=>Math.max(0,Math.min(1,v)),range=(p,a,b)=>clamp((p-a)/(b-a)),smooth=v=>v*v*(3-2*v);
 const reducedQuery=matchMedia('(prefers-reduced-motion: reduce)');let reduced=reducedQuery.matches;
-const motion={demoDuration:42,cues:{'unscrew-start':.10,'internal-reveal':.32,'mist-burst':.52,'reassembly-lock':.91}};
+const motion={demoDuration:42,cues:{'unscrew-start':.10,'internal-reveal':.32,'mist-burst':.52,'reassembly-lock':.93}};
 const scenes=$$('.scroll-scene'),chapters=$$('[data-chapter]'),railLinks=$$('.chapter-rail>a');
 const header=$('.header'),pageProgress=$('.page-progress'),railProgress=$('.rail-track i');
 const menuButton=$('.menu-button'),menu=$('#menu');
@@ -23,7 +23,19 @@ function paint(){if(!ctx)return;ctx.clearRect(0,0,cw,ch);const p=reduced?.42:col
 function sizeCanvas(){const box=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,1.5);cw=box.width;ch=box.height;canvas.width=Math.round(cw*dpr);canvas.height=Math.round(ch*dpr);ctx?.setTransform(dpr,0,0,dpr,0,0);paint();}
 const canvasObserver=new ResizeObserver(sizeCanvas);canvasObserver.observe(canvas);
 const colorProduct=$('.color-product'),colorPad=$('.color-assembly .part-pad'),colorCap=$('.color-assembly .part-cap'),previewButton=$('.preview-close');
-function updateColorPose(){colorPad.style.transform=colorClosed?'translateY(0px)':'translateY(-225px)';colorCap.style.transform=colorClosed?'translateY(29px) rotateY(360deg)':'translateY(-205px) rotateY(0deg)';previewButton.setAttribute('aria-pressed',String(colorClosed));previewButton.textContent=colorClosed?'شاهد اللون بالداخل':'شاهدها مغلقة';}
+// A photographic cap must retain its cylindrical silhouette while seating.
+const seatedCapY=52,capUnderside=24;
+function setCapPose(cap,gap,seat=1-gap){
+  cap.style.transform=`translateY(${seatedCapY-gap*262}px)`;
+  cap.style.clipPath=`inset(0 0 ${smooth(seat)*capUnderside}px 0)`;
+}
+function updateColorPose(){
+  colorProduct.classList.toggle('is-closed',colorClosed);
+  colorProduct.setAttribute('aria-label',`الفوّاحة ${colorClosed?'مغلقة':'مفتوحة'} مع اللباد ${$('.color-name').textContent}`);
+  previewButton.setAttribute('aria-pressed',String(colorClosed));
+  previewButton.textContent=colorClosed?'افتح لمعاينة اللون':'شاهدها مغلقة';
+}
+updateColorPose();
 previewButton.addEventListener('click',()=>{colorClosed=!colorClosed;updateColorPose();});
 $$('.swatches button').forEach(button=>button.addEventListener('click',()=>{accent=button.dataset.color;$$('.swatches button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));$('.color-name').textContent=button.dataset.name;const filter=button.dataset.name==='أسود'?'grayscale(1) brightness(.28)':`hue-rotate(${button.dataset.hue}deg) saturate(${button.dataset.name==='عنّابي'?.7:1.15}) brightness(${button.dataset.name==='عنّابي'?.55:1})`;$('#colors').style.setProperty('--accent',accent);$('#colors').style.setProperty('--pad-filter',filter);colorProduct.setAttribute('aria-label',`معاينة الفوّاحة مع اللباد: ${button.dataset.name}`);if(colorClosed){colorClosed=false;updateColorPose();}paint();}));
 const els={heroMedia:$('.hero-media'),heroCopy:$('.hero-copy'),heroCaption:$('.hero-caption'),heroBottom:$('.hero-bottom'),scene:$('.mechanism-scene'),cap:$('.mechanism-frame .part-cap'),pad:$('.mechanism-frame .part-pad'),spray:$('.scent-reveal'),caption:$('.mechanism-step'),captionText:$('.mechanism-caption p'),readout:$('.readout-number'),anatomyBar:$('.anatomy-progress i'),colorCopy:$('.color-copy'),giftMedia:$('.gift-media'),giftCopy:$('.gift-copy'),quote:$('.quote-section p')};
@@ -35,9 +47,27 @@ function renderNfc(p){const flip=smooth(range(p,0,.3)),approach=smooth(range(p,.
 $('.nfc-play').addEventListener('click',()=>{cancelAnimationFrame(nfcFrame);nfcManual=true;const start=performance.now();const tick=t=>{const p=clamp((t-start)/4200);renderNfc(reduced?1:p);if(p<1&&!reduced)nfcFrame=requestAnimationFrame(tick);else nfcManual=false;};nfcFrame=requestAnimationFrame(tick);});
 
 const lights=new Map(scenes.map(el=>[el,$('.emerald-light',el)])),state=new Map();let phase=-1;
-function setPhase(n){if(phase===n)return;phase=n;const captions=[['افتح الفوّاحة','لفّة تكشف التفاصيل.'],['مساحة لعطرك','قطعة لباد، وعطرك المفضّل.'],['رَشّة، تصنع الأثر','العطر يلامس النسيج ويصبح جزءًا من طقسك.'],['أغلق. واحتفظ بالأثر.','اللباد في الداخل. والفوّاحة ترافقك.']];els.caption.textContent=captions[n][0];els.captionText.textContent=captions[n][1];}
+function setPhase(n){if(phase===n)return;phase=n;const captions=[['افتح الفوّاحة','لفّة تكشف التفاصيل.'],['مساحة لعطرك','قطعة لباد، وعطرك المفضّل.'],['رَشّة، تصنع الأثر','العطر يلامس النسيج ويصبح جزءًا من طقسك.'],['أغلق. واحتفظ بالأثر.','أعد اللباد، ثم أحكم إغلاق الغطاء.'],['الفوّاحة مغلقة.','الغطاء مستقرّ في مكانه، واللباد في الداخل.']];els.caption.textContent=captions[n][0];els.captionText.textContent=captions[n][1];}
 function applyScene(el,p){state.set(el.id,p);if(reduced)return;const light=lights.get(el);if(light){light.style.setProperty('--light-x',`${Math.sin(p*Math.PI*2)*7}%`);light.style.setProperty('--light-y',`${Math.cos(p*Math.PI)*5}%`);light.style.setProperty('--light-turn',`${p*25}deg`);}if(el.id==='home'){const q=smooth(range(p,.06,.95));els.heroMedia.style.transform=`scale(${1+q*.20}) translateX(${q*2}%)`;els.heroCopy.style.transform=`translateY(${-q*28}px)`;els.heroCopy.style.opacity=1-range(p,.63,.95)*.65;els.heroCaption.style.opacity=1-range(p,.45,.85);els.heroBottom.style.opacity=1-range(p,.5,.9);}
-if(el.id==='anatomy'){const opening=smooth(range(p,.08,.27)),padOut=smooth(range(p,.22,.39)),closing=smooth(range(p,.74,.93)),capGap=opening*(1-closing),padGap=padOut*(1-smooth(range(p,.68,.81)));els.cap.style.transform=`translateY(${29-capGap*239}px) rotateY(${opening*720-closing*720}deg)`;els.pad.style.transform=`translateY(${-padGap*240}px)`;const sprayShow=smooth(range(p,.40,.47))*(1-smooth(range(p,.61,.68)));els.spray.style.opacity=sprayShow;els.spray.style.transform=`scale(${1.08-range(p,.4,.68)*.08})`;els.scene.style.opacity=1-sprayShow;els.pad.style.filter=`saturate(${1+range(p,.47,.58)*.65})`;els.pad.style.opacity=padGap>.03?1:.75;els.readout.textContent=String(Math.round(capGap*360)).padStart(3,'0')+'°';els.anatomyBar.style.transform=`scaleX(${p})`;setPhase(p<.24?0:p<.43?1:p<.67?2:3);const burst=range(p,.43,.62);droplets.forEach(dot=>{const travel=clamp((burst-Number(dot.dataset.offset)*.2)/.8);dot.style.transform=`translate(${travel*260}px,${Number(dot.dataset.angle)*travel*45}px) scale(${.35+travel*.5})`;dot.style.opacity=Math.sin(travel*Math.PI)*.22;});}
+if(el.id==='anatomy'){
+  const opening=smooth(range(p,.08,.27)),padOut=smooth(range(p,.22,.39));
+  // Return the felt completely before the cap reaches the threaded neck.
+  const padReturn=smooth(range(p,.68,.80)),capReturn=smooth(range(p,.80,.87)),lock=smooth(range(p,.87,.93));
+  const gap=opening*(1-capReturn),padGap=padOut*(1-padReturn),seat=p<.5?1-opening:lock;
+  setCapPose(els.cap,gap,seat);
+  els.cap.style.transform=`translateY(${seatedCapY-gap*262-(1-gap)*(1-seat)*20}px)`;
+  els.pad.style.transform=`translateY(${-padGap*240}px)`;
+  const sprayShow=smooth(range(p,.40,.47))*(1-smooth(range(p,.61,.68)));
+  els.spray.style.opacity=sprayShow;els.spray.style.transform=`scale(${1.08-range(p,.4,.68)*.08})`;
+  els.scene.style.opacity=1-sprayShow;els.pad.style.filter=`saturate(${1+range(p,.47,.58)*.65})`;
+  els.pad.style.opacity=1;
+  const closed=p>=.93||p<=.08;
+  els.readout.textContent=closed?'مغلقة':p>=.80?'جارٍ الإغلاق':String(Math.round(opening*360)).padStart(3,'0')+'°';
+  els.readout.setAttribute('dir',closed||p>=.80?'rtl':'ltr');
+  els.anatomyBar.style.transform=`scaleX(${p})`;
+  setPhase(p<.24?0:p<.43?1:p<.67?2:p<.93?3:4);
+  const burst=range(p,.43,.62);droplets.forEach(dot=>{const travel=clamp((burst-Number(dot.dataset.offset)*.2)/.8);dot.style.transform=`translate(${travel*260}px,${Number(dot.dataset.angle)*travel*45}px) scale(${.35+travel*.5})`;dot.style.opacity=Math.sin(travel*Math.PI)*.22;});
+}
 if(el.id==='colors'){colorProgress=p;els.colorCopy.style.transform=`translateY(${-Math.sin(p*Math.PI)*15}px)`;colorProduct.style.setProperty('--product-turn',`${Math.sin(p*Math.PI)*8}deg`);paint();}
 if(el.id==='nfc')applyNfc(p);
 if(el.id==='gift'){els.giftMedia.style.transform=`scale(${1.06-p*.06}) translateX(${p*1.2}%)`;els.giftCopy.style.transform=`translateY(${(1-smooth(p))*20}px)`;}}
@@ -45,7 +75,7 @@ let geometry=[],chapterGeometry=[],decorGeometry=[],totalHeight=1;const decor=[$
 function measure(){geometry=scenes.map(el=>({el,start:el.offsetTop,range:Math.max(1,el.offsetHeight-$('.stage',el).offsetHeight)}));chapterGeometry=chapters.map(el=>({start:el.offsetTop,chapter:Number(el.dataset.chapter)}));decorGeometry=decor.map(el=>({el,start:el.offsetTop,height:el.offsetHeight,light:$('.emerald-light',el)}));totalHeight=Math.max(1,document.documentElement.scrollHeight-innerHeight);}
 function updateAll(){const y=scrollY,p=clamp(y/totalHeight);header.classList.toggle('scrolled',y>45);pageProgress.style.transform=`scaleX(${p})`;railProgress.style.transform=`scaleY(${p})`;let active=0;chapterGeometry.forEach(g=>{if(g.start<y+innerHeight*.55)active=g.chapter;});railLinks.forEach((a,i)=>{a.classList.toggle('active',i===active);if(i===active)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});if(!window.ScrollTrigger&&!reduced)geometry.forEach(g=>applyScene(g.el,clamp((y-g.start)/g.range)));if(!reduced)decorGeometry.forEach(g=>{const d=clamp((y+innerHeight-g.start)/(innerHeight+g.height));if(d<=0||d>=1)return;if(g.el.classList.contains('quote-section')){const q=smooth(range(d,.40,.80));els.quote.style.transform=`translateY(${-q*65}px) scale(${1+q*.07})`;els.quote.style.opacity=1-q;els.quote.style.filter=`blur(${q*9}px)`;}if(g.light)g.light.style.setProperty('--light-x',`${d*10-5}%`);});}
 let queued=false;const onScroll=()=>{if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;updateAll();});}};addEventListener('scroll',onScroll,{passive:true});
-let triggers=[];function configureMotion(){triggers.forEach(t=>t.kill());triggers=[];if(window.gsap&&window.ScrollTrigger&&!reduced){gsap.registerPlugin(ScrollTrigger);scenes.forEach(el=>triggers.push(ScrollTrigger.create({trigger:el,start:'top top',end:()=>`+=${Math.max(1,el.offsetHeight-$('.stage',el).offsetHeight)}`,invalidateOnRefresh:true,onUpdate:self=>applyScene(el,self.progress),onRefresh:self=>applyScene(el,self.progress)})));}if(reduced){renderNfc(1);els.heroCopy.style.opacity=1;els.heroMedia.style.transform='none';els.heroCopy.style.transform='none';els.heroCaption.style.opacity=1;els.heroBottom.style.opacity=1;els.scene.style.opacity=1;els.giftMedia.style.transform='none';els.giftCopy.style.transform='none';setPhase(1);}measure();updateAll();paint();}
+let triggers=[];function configureMotion(){triggers.forEach(t=>t.kill());triggers=[];if(window.gsap&&window.ScrollTrigger&&!reduced){gsap.registerPlugin(ScrollTrigger);scenes.forEach(el=>triggers.push(ScrollTrigger.create({trigger:el,start:'top top',end:()=>`+=${Math.max(1,el.offsetHeight-$('.stage',el).offsetHeight)}`,invalidateOnRefresh:true,onUpdate:self=>applyScene(el,self.progress),onRefresh:self=>applyScene(el,self.progress)})));}if(reduced){renderNfc(1);els.heroCopy.style.opacity=1;els.heroMedia.style.transform='none';els.heroCopy.style.transform='none';els.heroCaption.style.opacity=1;els.heroBottom.style.opacity=1;els.scene.style.opacity=1;els.giftMedia.style.transform='none';els.giftCopy.style.transform='none';setCapPose(els.cap,0,1);els.pad.style.transform='translateY(0px)';els.readout.textContent='مغلقة';setPhase(4);}measure();updateAll();paint();}
 configureMotion();addEventListener('resize',()=>{measure();updateAll();});document.fonts.ready.then(()=>{measure();window.ScrollTrigger?.refresh();updateAll();});addEventListener('load',()=>{measure();window.ScrollTrigger?.refresh();});reducedQuery.addEventListener('change',()=>{reduced=reducedQuery.matches;configureMotion();});
 const params=new URLSearchParams(location.search);let demoRunning=false,demoStart=0,demoOffset=0,demoRaf=0;const demoButton=$('#demo-toggle'),duration=Math.min(180,Math.max(10,Number(params.get('duration'))||motion.demoDuration))*1000;
 const stopDemo=()=>{demoRunning=false;cancelAnimationFrame(demoRaf);demoButton.textContent='تشغيل العرض';};

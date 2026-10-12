@@ -21,3 +21,18 @@
 @media(prefers-reduced-motion:reduce){.nfc{height:auto}.nfc-stage{position:relative}.quote-section p{transform:none!important;filter:none!important;opacity:1!important}.nfc-card{transition:none}}
 .nfc{overflow:clip}
 .nfc-stage>.section-kicker{position:absolute;top:120px;left:10.5%;right:10.5%;z-index:2}.nfc-stage>.section-kicker{display:none}.ritual-cta-row{padding:0 10% 40px;background:#08261c}.phone-message small{font-size:11px}.phone-notification span,.phone-notification small{font-size:11px}
+
+/* The underside disappears as the lid seats over the neck. */
+.mechanism-frame .part-cap{clip-path:inset(0 0 24px 0)}
+.color-assembly .part-cap{transform:translateY(-210px);clip-path:inset(0);transition:transform 700ms cubic-bezier(.45,0,.2,1),clip-path 220ms ease;transition-delay:0ms}
+.color-assembly .part-pad{transform:translateY(-225px);transition:transform 450ms cubic-bezier(.45,0,.2,1),filter 350ms ease;transition-delay:200ms,0ms}
+.color-product.is-closed .part-pad{transform:translateY(0);transition-delay:0ms}
+.color-product.is-closed .part-cap{transform:translateY(52px);clip-path:inset(0 0 24px 0);transition-delay:450ms,930ms}
+.menu-button{width:44px;height:44px;align-items:center}
+.swatches{gap:8px}.swatches button{width:44px;height:44px;background:radial-gradient(circle,var(--swatch) 0 10.5px,transparent 11px)}
+.swatches button:before{inset:6px}.swatches button:after{inset:0}
+.readout-number{font-family:SAMD,'Segoe UI',sans-serif;font-size:26px;line-height:1.5}
+@media(max-width:650px){.swatches{display:flex;gap:0;max-width:100%;overflow-x:auto;padding:8px 0}.swatches button{flex:0 0 44px}.swatches button{width:44px;height:44px}.swatches button:before{inset:6px}.color-control{gap:3px;left:4%;right:4%}.store-link,.preview-close,.color-control .section-cta{min-height:44px}.store-link{display:inline-flex;align-items:center}.tiny-star{margin-right:10px}}
+@media(prefers-reduced-motion:reduce){.mechanism-frame .part-cap{transform:translateY(52px)!important;clip-path:inset(0 0 24px 0)}.mechanism-frame .part-pad{transform:translateY(0)!important}.color-assembly .part-cap,.color-assembly .part-pad{transition:none}}
+
+
