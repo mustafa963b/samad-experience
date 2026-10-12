@@ -36,3 +36,8 @@
 @media(prefers-reduced-motion:reduce){.mechanism-frame .part-cap{transform:translateY(52px)!important;clip-path:inset(0 0 24px 0)}.mechanism-frame .part-pad{transform:translateY(0)!important}.color-assembly .part-cap,.color-assembly .part-pad{transition:none}}
 
 
+/* Sticky stages need real travel even when the viewport is shorter than their minimum height. */
+.scroll-scene{--stage-floor:620px;--scene-travel:40svh;min-height:calc(max(100svh,var(--stage-floor)) + var(--scene-travel))}
+.anatomy{--scene-travel:135svh}.colors{--scene-travel:30svh}.gift{--scene-travel:25svh}.nfc{--scene-travel:80svh}
+@media(max-width:650px){.scroll-scene{--stage-floor:650px}.hero{--scene-travel:25svh}.anatomy{--scene-travel:115svh}.colors{--scene-travel:20svh}.gift{--scene-travel:15svh}.nfc{--stage-floor:790px;--scene-travel:70svh}}
+@media(prefers-reduced-motion:reduce){.scroll-scene{min-height:0}}
