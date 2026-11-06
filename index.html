@@ -2,6 +2,108 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--
+    TikTok Pixel صمد2.
+    Pixel code D7B9GLBC77UCDVDNIN80, pixel ID 7626447471787966472.
+    Standard base code: loads analytics.tiktok.com/i18n/pixel/events.js, then ttq.page()
+    reports a Pageview on every load of this page (the only HTML page in the site).
+  -->
+  <script>
+    !function (w, d, t) {
+      w.TiktokAnalyticsObject = t;
+      var ttq = w[t] = w[t] || [];
+      ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie"];
+      ttq.setAndDefer = function (t, e) {
+        t[e] = function () {
+          t.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+        };
+      };
+      for (var i = 0; i < ttq.methods.length; i++) ttq.setAndDefer(ttq, ttq.methods[i]);
+      ttq.instance = function (t) {
+        for (var e = ttq._i[t] || [], n = 0; n < ttq.methods.length; n++) ttq.setAndDefer(e, ttq.methods[n]);
+        return e;
+      };
+      ttq.load = function (e, n) {
+        var i = "https://analytics.tiktok.com/i18n/pixel/events.js";
+        ttq._i = ttq._i || {};
+        ttq._i[e] = [];
+        ttq._i[e]._u = i;
+        ttq._t = ttq._t || {};
+        ttq._t[e] = +new Date;
+        ttq._o = ttq._o || {};
+        ttq._o[e] = n || {};
+        n = document.createElement("script");
+        n.type = "text/javascript";
+        n.async = true;
+        n.src = i + "?sdkid=" + e + "&lib=" + t;
+        e = document.getElementsByTagName("script")[0];
+        e.parentNode.insertBefore(n, e);
+      };
+      ttq.load('D7B9GLBC77UCDVDNIN80');
+      ttq.page();
+    }(window, document, 'ttq');
+  </script>
+  <!--
+    Shopping action. Ad groups on this pixel optimize for API event SHOPPING.
+    The pixel SDK's standard event for that goal is Purchase (internal name "shopping");
+    CompletePayment is the supported alias and is what we send. We do not call
+    ttq.track('Purchase'), and we do not send currency, value, or price.
+    ClickButton, AddToCart, and InitiateCheckout map to other goals (button, on_web_cart,
+    initiate_order) and would not match these campaigns.
+    Fires on any link to samadsebha.com, including product URLs, before the new tab opens.
+    This page has no choose-scent, add-to-cart, or buy control, so those are not wired.
+    Capture phase plus the SDK's sendBeacon keeps the hit if a future link navigates away.
+  -->
+  <script>
+    (function () {
+      var STORE_HOSTS = { 'samadsebha.com': true, 'www.samadsebha.com': true };
+
+      function anchorFrom(target) {
+        var node = target;
+        if (node && node.nodeType !== 1) node = node.parentNode;
+        while (node && node !== document) {
+          if (node.tagName === 'A' && node.href) return node;
+          node = node.parentNode;
+        }
+        return null;
+      }
+
+      function labelOf(anchor) {
+        return (anchor.textContent || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function onStoreClick(event) {
+        if (event.type === 'auxclick' && event.button !== 1) return;
+        var anchor = anchorFrom(event.target);
+        if (!anchor) return;
+        var url;
+        try { url = new URL(anchor.href, window.location.href); }
+        catch (error) { return; }
+        if (!STORE_HOSTS[url.hostname]) return;
+        if (!window.ttq || typeof window.ttq.track !== 'function') return;
+
+        var label = labelOf(anchor) || url.href;
+        var parts = url.pathname.split('/').filter(Boolean);
+        var isProduct = parts[0] === 'products' && parts.length > 1;
+        var content = {
+          content_id: url.href,
+          content_name: label,
+          content_type: isProduct ? 'product' : 'product_group'
+        };
+        // Track first. Links open in a new tab, so this page stays up while the hit is sent.
+        window.ttq.track('CompletePayment', {
+          content_id: content.content_id,
+          content_name: content.content_name,
+          content_type: content.content_type,
+          description: url.href,
+          contents: [content]
+        });
+      }
+
+      document.addEventListener('click', onStoreClick, true);
+      document.addEventListener('auxclick', onStoreClick, true);
+    }());
+  </script>
   <meta name="theme-color" content="#061c16"><meta name="description" content="صمد. سبحة تحمل عطرك، وهدية تحمل معنى. اكتشف الفوّاحة وتفاصيل تجربة صمد.">
   <meta property="og:type" content="website"><meta property="og:locale" content="ar_SA"><meta property="og:title" content="صمد — عطرك، بين يديك"><meta property="og:description" content="اكتشف الفوّاحة وتفاصيل تجربة صمد والسبح المعطّرة والهدايا."><meta property="og:image" content="https://mustafa963b.github.io/samad-experience/assets/hero.webp"><meta property="og:url" content="https://mustafa963b.github.io/samad-experience/"><link rel="canonical" href="https://mustafa963b.github.io/samad-experience/"><title>صمد — عطرك، بين يديك</title>
   <link rel="icon" href="assets/logo.png"><link rel="preload" as="image" href="assets/hero.webp">
