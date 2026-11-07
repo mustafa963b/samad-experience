@@ -49,12 +49,18 @@
     CompletePayment or InitiateCheckout; real purchases stay on the Zid store pixel.
     Params: content_id and description are the destination URL, content_name is the
     visible label, content_type is product for /products/{slug} and product_group otherwise.
-    Color swatches, ritual steps, and the NFC demo are not store links, so they do not fire it.
-    Capture phase plus the SDK's sendBeacon keeps the hit if a future link navigates away.
+    The same listener copies ttclid and utm_* from this landing URL onto those hrefs
+    (kept for 7 days in samad_attr) so the Zid pixel can attribute the purchase.
+    The TikTok _ttp cookie is not copied. Color swatches, ritual steps, and the NFC
+    demo are not store links, so they do not fire ClickButton and are not rewritten.
   -->
   <script>
     (function () {
       var STORE_HOSTS = { 'samadsebha.com': true, 'www.samadsebha.com': true };
+      var ATTR_KEYS = ['ttclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+      var ATTR_KEY = 'samad_attr';
+      var MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+      var attribution = {};
 
       function anchorFrom(target) {
         var node = target;
@@ -70,14 +76,126 @@
         return (anchor.textContent || '').replace(/\s+/g, ' ').trim();
       }
 
+      function pickAttrs(source) {
+        var out = {};
+        if (!source) return out;
+        for (var i = 0; i < ATTR_KEYS.length; i++) {
+          var key = ATTR_KEYS[i];
+          if (typeof source[key] === 'string' && source[key]) out[key] = source[key];
+        }
+        return out;
+      }
+
+      function openStorage(name) {
+        try { return window[name]; }
+        catch (error) { return null; }
+      }
+
+      function readStorage(storage) {
+        if (!storage) return null;
+        try {
+          var raw = storage.getItem(ATTR_KEY);
+          if (!raw) return null;
+          var data = JSON.parse(raw);
+          if (!data || typeof data.savedAt !== 'number' || Date.now() - data.savedAt > MAX_AGE) {
+            try { storage.removeItem(ATTR_KEY); } catch (ignore) {}
+            return null;
+          }
+          var attrs = pickAttrs(data);
+          attrs.savedAt = data.savedAt;
+          return attrs;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function readUrlAttrs() {
+        var params = new URLSearchParams(window.location.search);
+        var out = {};
+        for (var i = 0; i < ATTR_KEYS.length; i++) {
+          var key = ATTR_KEYS[i];
+          var value = params.get(key);
+          if (value) out[key] = value;
+        }
+        return out;
+      }
+
+      function persist(attrs) {
+        var payload = { savedAt: attrs.savedAt };
+        var any = false;
+        for (var i = 0; i < ATTR_KEYS.length; i++) {
+          var key = ATTR_KEYS[i];
+          if (attrs[key]) {
+            payload[key] = attrs[key];
+            any = true;
+          }
+        }
+        if (!any) return;
+        var json = JSON.stringify(payload);
+        var sessionStore = openStorage('sessionStorage');
+        var localStore = openStorage('localStorage');
+        try { if (sessionStore) sessionStore.setItem(ATTR_KEY, json); } catch (error) {}
+        try { if (localStore) localStore.setItem(ATTR_KEY, json); } catch (error) {}
+      }
+
+      function resolveAttribution() {
+        var session = readStorage(openStorage('sessionStorage'));
+        var local = readStorage(openStorage('localStorage'));
+        var stored = session;
+        if (!stored || (local && local.savedAt > stored.savedAt)) stored = local;
+        var fresh = readUrlAttrs();
+        var merged = {};
+        var hasFresh = false;
+        for (var i = 0; i < ATTR_KEYS.length; i++) {
+          var key = ATTR_KEYS[i];
+          if (fresh[key]) {
+            merged[key] = fresh[key];
+            hasFresh = true;
+          } else if (stored && stored[key]) {
+            merged[key] = stored[key];
+          }
+        }
+        if (hasFresh) merged.savedAt = Date.now();
+        else if (stored && stored.savedAt) merged.savedAt = stored.savedAt;
+        if (merged.savedAt) persist(merged);
+        return merged;
+      }
+
+      function isStoreUrl(url) {
+        return !!(url && STORE_HOSTS[url.hostname]);
+      }
+
+      function decorateAnchor(anchor) {
+        var url;
+        try { url = new URL(anchor.href, window.location.href); }
+        catch (error) { return; }
+        if (!isStoreUrl(url)) return;
+        var changed = false;
+        for (var i = 0; i < ATTR_KEYS.length; i++) {
+          var key = ATTR_KEYS[i];
+          if (attribution[key] && !url.searchParams.has(key)) {
+            url.searchParams.set(key, attribution[key]);
+            changed = true;
+          }
+        }
+        if (changed) anchor.href = url.href;
+      }
+
+      function decorateStoreLinks() {
+        var links = document.querySelectorAll('a[href]');
+        for (var i = 0; i < links.length; i++) decorateAnchor(links[i]);
+      }
+
       function onStoreClick(event) {
         if (event.type === 'auxclick' && event.button !== 1) return;
         var anchor = anchorFrom(event.target);
         if (!anchor) return;
+        // Stamp attribution onto the href before the browser follows it.
+        decorateAnchor(anchor);
         var url;
         try { url = new URL(anchor.href, window.location.href); }
         catch (error) { return; }
-        if (!STORE_HOSTS[url.hostname]) return;
+        if (!isStoreUrl(url)) return;
         if (!window.ttq || typeof window.ttq.track !== 'function') return;
 
         var label = labelOf(anchor) || url.href;
@@ -88,7 +206,7 @@
           content_name: label,
           content_type: isProduct ? 'product' : 'product_group'
         };
-        // Track first. Links open in a new tab, so this page stays up while the hit is sent.
+        // Track before the new tab opens. The page stays up, and the SDK uses sendBeacon.
         window.ttq.track('ClickButton', {
           content_id: content.content_id,
           content_name: content.content_name,
@@ -98,6 +216,9 @@
         });
       }
 
+      attribution = resolveAttribution();
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', decorateStoreLinks);
+      else decorateStoreLinks();
       document.addEventListener('click', onStoreClick, true);
       document.addEventListener('auxclick', onStoreClick, true);
     }());
