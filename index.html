@@ -44,15 +44,12 @@
     }(window, document, 'ttq');
   </script>
   <!--
-    Shopping action. Ad groups on this pixel optimize for API event SHOPPING.
-    The pixel SDK's standard event for that goal is Purchase (internal name "shopping");
-    CompletePayment is the supported alias and is what we send. We do not call
-    ttq.track('Purchase'), and we do not send currency, value, or price.
-    ClickButton, AddToCart, and InitiateCheckout map to other goals (button, on_web_cart,
-    initiate_order) and would not match these campaigns.
-    Fires on any link to samadsebha.com, including the اشترِ الآن buttons and product URLs, before the new tab opens.
-    content_name is the visible label, so those buttons send content_name "اشترِ الآن".
-    Color swatches, ritual steps, and the NFC demo are not store actions, so they do not fire it.
+    Store-link clicks. Every link to samadsebha.com, including both اشترِ الآن buttons,
+    fires ttq.track('ClickButton') before the new tab opens. This page does not send
+    CompletePayment or InitiateCheckout; real purchases stay on the Zid store pixel.
+    Params: content_id and description are the destination URL, content_name is the
+    visible label, content_type is product for /products/{slug} and product_group otherwise.
+    Color swatches, ritual steps, and the NFC demo are not store links, so they do not fire it.
     Capture phase plus the SDK's sendBeacon keeps the hit if a future link navigates away.
   -->
   <script>
@@ -92,7 +89,7 @@
           content_type: isProduct ? 'product' : 'product_group'
         };
         // Track first. Links open in a new tab, so this page stays up while the hit is sent.
-        window.ttq.track('CompletePayment', {
+        window.ttq.track('ClickButton', {
           content_id: content.content_id,
           content_name: content.content_name,
           content_type: content.content_type,
