@@ -76,3 +76,63 @@
 @media(max-width:900px){.real-store{grid-template-columns:1fr;gap:42px;padding:72px 8%}.real-store-photo img{height:auto;max-height:620px;aspect-ratio:4/5}.real-store h2{font-size:clamp(48px,10vw,74px)}}
 @media(max-width:650px){.real-store{gap:36px;padding:62px 8% 72px}.real-store h2{font-size:52px;margin:15px 0 19px}.real-store p{font-size:15px}.real-store-links{margin-top:25px}.real-store-links a{font-size:14px;min-width:100%}.real-store-links .buy-now{width:100%;min-height:48px;font-size:15px}.real-store-photo img{max-height:none}}
 @media(prefers-reduced-motion:reduce){.real-store-links a{transition:none}}
+
+/* Keep shopping actions separate from the editorial copy. */
+.manifesto-note .manifesto-gift-note {
+  margin: 1rem 0 0;
+  color: #4a5f47;
+}
+.manifesto-note .manifesto-shop { margin-top: .75rem; }
+.manifesto-ritual-link {
+  display: none;
+}
+
+@media (max-width: 650px) {
+  .link-arrow, .cta-icon { display: none !important; }
+  .hero-actions :is(.hero-store-link, .hero-discover-link),
+  .menu .menu-store-link,
+  .section-cta,
+  .real-store-links a,
+  .footer-store {
+    min-height: 44px;
+  }
+  .hero-actions .hero-discover-link { justify-content: center; }
+  .section-cta {
+    justify-content: center;
+    gap: 0;
+    padding-inline: 12px;
+    border-radius: 6px;
+  }
+  .manifesto-note .manifesto-shop {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 1rem;
+    border: 1px solid #103b2c;
+    background: #103b2c;
+    color: #f9f4e7;
+    font-size: 15px;
+    text-align: center;
+  }
+  .manifesto-ritual-link {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    margin-top: .45rem;
+    align-items: center;
+    justify-content: center;
+    padding: .3rem .6rem;
+    color: #204b38;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: .25em;
+  }
+  :is(.manifesto-ritual-link, .section-cta, .hero-store-link, .menu-store-link, .real-store-links a, .footer-store):focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+  .manifesto-shop:focus-visible { outline-color: #103b2c; }
+  .real-store-links a { justify-content: flex-start; }
+  .real-store-links .buy-now { justify-content: center; }
+  .solid-link { min-height: 44px; }
+}
